@@ -2,6 +2,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import connectToDabase from './utils/db';
+import userRoutes from './routes/users.routes'
 import messageRoutes from './routes/message.routes';
 
 
@@ -14,6 +15,8 @@ connectToDabase();
 
 // Middleware
 app.use(express.json());
+
+app.use('/api/users', userRoutes);
 
 app.use('/api/messages', messageRoutes);
 
