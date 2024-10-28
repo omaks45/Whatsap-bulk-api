@@ -10,20 +10,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import jwt from 'jsonwebtoken';
 import User from '../models/users.model.js';
 export const checkAuth = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const token = req.headers.authorization;
-    if (!token) {
-        res.status(401).json({ message: 'No token provided' });
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        res.status(401).json({ message: 'No token or invalid format provided' });
         return;
     }
+    const token = authHeader.split(' ')[1]; // Extract the actual token
     try {
         if (!process.env.JWT_SECRET) {
             res.status(500).json({ message: 'JWT secret is not defined' });
             return;
         }
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = yield User.findById(decoded._id);
+        const user = yield User.findById(decoded.id);
         if (!user) {
-            res.status(401).json({ message: 'Invalid token' });
+            res.status(401).json({ message: 'Invalid token: user not found' });
             return;
         }
         // Attach the user to the request object

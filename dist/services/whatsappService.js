@@ -11,22 +11,32 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import axios from 'axios';
 export const sendMessageToWhatsAppAPI = (message) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (!process.env.WHATSAPP_API_SID) {
-            throw new Error('WHATSAPP_API_SID is not defined');
+        // Check for required environment variables
+        if (!process.env.WHATSAPP_API_SID || !process.env.WHATSAPP_API_TOKEN) {
+            throw new Error('WHATSAPP_API_SID or WHATSAPP_API_TOKEN is not defined');
         }
-        const response = yield axios.post(process.env.WHATSAPP_API_SID, {
-            headers: {
-                Authorization: `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
+        // Prepare form data for the Twilio API
+        const data = new URLSearchParams();
+        data.append('To', `whatsapp:${message.recipients}`); // Recipient's WhatsApp number
+        data.append('From', 'whatsapp:+18433145236'); // Your Twilio WhatsApp number
+        data.append('Body', message.messageContent); // Message content
+        // Construct Twilio API endpoint URL
+        const url = `https://api.twilio.com/2010-04-01/Accounts/${process.env.WHATSAPP_API_SID}/Messages.json`;
+        // Make the API request with axios
+        const response = yield axios.post(url, data.toString(), {
+            auth: {
+                username: process.env.WHATSAPP_API_SID, // Twilio Account SID
+                password: process.env.WHATSAPP_API_TOKEN, // Twilio Auth Token
             },
-            data: {
-                to: message.recipients,
-                body: message.messageContent,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
         });
-        return { success: response.status === 200 };
+        // Return success if message was sent successfully
+        return { success: response.status === 201 }; // HTTP 201 indicates resource created (message sent)
     }
     catch (error) {
         console.error('Error sending message to WhatsApp:', error.message);
-        return { success: false };
+        return { success: false, error: error.message };
     }
 });

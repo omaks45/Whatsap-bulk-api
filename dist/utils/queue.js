@@ -12,7 +12,12 @@ import Queue from 'bull';
 import Message from '../models/message.model.js';
 import { sendMessageToWhatsAppAPI } from '../services/whatsappService.js';
 const messageQueue = new Queue('message-queue', {
-    redis: { host: '127.0.0.1', port: 6379 },
+    redis: {
+        host: process.env.REDIS_HOST || '127.0.0.1', // Default to local Redis during development
+        port: Number(process.env.REDIS_PORT) || 6379, // Default to local Redis port
+        password: process.env.REDIS_PASSWORD || undefined, // Add password if provided
+        tls: process.env.REDIS_TLS === 'true' ? {} : undefined, // If using Redis over TLS/SSL
+    },
 });
 messageQueue.process((job) => __awaiter(void 0, void 0, void 0, function* () {
     const { messageId } = job.data;
